@@ -1,77 +1,52 @@
 import React, { useState, useEffect } from 'react';
 
-export interface BlockData {
-  role: string;
-  context: string;
-  input: string;
-  outputStyle: string;
-}
-
 interface BlockEditorProps {
-  onPromptChange: (prompt: string) => void;
+  onPromptChange: (combinedPrompt: string) => void;
 }
 
 export default function BlockEditor({ onPromptChange }: BlockEditorProps) {
-  const [blocks, setBlocks] = useState<BlockData>({
-    role: '',
-    context: '',
-    input: '',
-    outputStyle: '',
-  });
+  const [role, setRole] = useState('');
+  const [context, setContext] = useState('');
+  const [input, setInput] = useState('');
+  const [output, setOutput] = useState('');
 
-  // Update parent whenever block content changes
   useEffect(() => {
-    const combinedPrompt = buildPrompt(blocks);
-    onPromptChange(combinedPrompt);
-  }, [blocks]);
+    const combined = `
+You are acting as: ${role || '[Specify a role or tone]'}.
 
-  const handleChange = (key: keyof BlockData, value: string) => {
-    setBlocks((prev) => ({ ...prev, [key]: value }));
-  };
+Context: ${context || '[Describe background or details here]'}.
 
-  const buildPrompt = (b: BlockData) => {
-    let parts: string[] = [];
-    if (b.role.trim()) parts.push(`You are ${b.role.trim()}.`);
-    if (b.context.trim()) parts.push(`Context: ${b.context.trim()}`);
-    if (b.input.trim()) parts.push(`Task: ${b.input.trim()}`);
-    if (b.outputStyle.trim()) parts.push(`Respond in ${b.outputStyle.trim()} style.`);
-    return parts.join('\n\n');
-  };
+Task/Input: ${input || '[State what the user provides or wants to know]'}.
+
+Expected Output: ${output || '[Describe the desired answer or format]'}.
+`.trim();
+
+    onPromptChange(combined);
+  }, [role, context, input, output]);
+
+  const blocks = [
+    { label: 'Role', value: role, setValue: setRole, placeholder: 'e.g., Senior Frontend Developer, Data Scientist' },
+    { label: 'Context', value: context, setValue: setContext, placeholder: 'e.g., Working on a dashboard using React' },
+    { label: 'Input', value: input, setValue: setInput, placeholder: 'e.g., Need code to fetch API data efficiently' },
+    { label: 'Output', value: output, setValue: setOutput, placeholder: 'e.g., Optimized code snippet with explanation' },
+  ];
 
   return (
-    <div style={{ marginTop: '1rem' }}>
-      <h3>Prompt Blocks</h3>
-
-      <div style={{ display: 'grid', gap: '1rem', marginTop: '0.5rem' }}>
-        <textarea
-          placeholder="Role (e.g. expert JavaScript tutor)"
-          value={blocks.role}
-          onChange={(e) => handleChange('role', e.target.value)}
-          rows={2}
-          style={{ width: '100%', fontFamily: 'monospace', padding: 8 }}
-        />
-        <textarea
-          placeholder="Context (e.g. helping a student understand closures)"
-          value={blocks.context}
-          onChange={(e) => handleChange('context', e.target.value)}
-          rows={3}
-          style={{ width: '100%', fontFamily: 'monospace', padding: 8 }}
-        />
-        <textarea
-          placeholder="Task (e.g. explain with a short code example)"
-          value={blocks.input}
-          onChange={(e) => handleChange('input', e.target.value)}
-          rows={3}
-          style={{ width: '100%', fontFamily: 'monospace', padding: 8 }}
-        />
-        <textarea
-          placeholder="Output Style (e.g. friendly, concise, markdown)"
-          value={blocks.outputStyle}
-          onChange={(e) => handleChange('outputStyle', e.target.value)}
-          rows={2}
-          style={{ width: '100%', fontFamily: 'monospace', padding: 8 }}
-        />
-      </div>
+    <div className="grid gap-6 md:grid-cols-2">
+      {blocks.map((block, idx) => (
+        <div
+          key={idx}
+          className="bg-white/60 border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur"
+        >
+          <h3 className="text-lg font-semibold mb-2 text-primary">{block.label}</h3>
+          <textarea
+            className="w-full h-28 resize-none border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent placeholder-gray-400"
+            value={block.value}
+            onChange={(e) => block.setValue(e.target.value)}
+            placeholder={block.placeholder}
+          />
+        </div>
+      ))}
     </div>
   );
 }
